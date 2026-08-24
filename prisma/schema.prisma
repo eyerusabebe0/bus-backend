@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  SUPERADMIN
+  ADMIN
+  USER
+}
+
+enum CompanyStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ScheduleStatus {
+  PUBLISHED
+  PAUSED
+}
+
+model User {
+  id           String    @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String    @unique
+  passwordHash String
+  phone        String?
+  role         UserRole  @default(USER)
+  companyId    String?
+  company      Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  bookings     Booking[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Company {
+  id                String        @id @default(uuid())
+  name              String
+  companyEmail      String        @unique
+  phone             String
+  address           String
+  adminEmail        String        @unique
+  adminPasswordHash String?
+  logo              String?
+  paymentAccounts   Json?
+  status            CompanyStatus @default(ACTIVE)
+  users             User[]
+  schedules         Schedule[]
+  bookings          Booking[]
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model Schedule {
+  id               String         @id @default(uuid())
+  companyId        String
+  company          Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  origin           String
+  destination      String
+  distance         Int?
+  departureTime    String
+  arrivalTime      String?
+  travelDate       DateTime?
+  price            Decimal        @db.Decimal(10, 2)
+  totalSeats       Int            @default(30)
+  bookedSeatNumbers Int[]          @default([])
+  availableSeats   Int            @default(30)
+  status           ScheduleStatus @default(PUBLISHED)
+  scheduleType     String         @default("single")
+  recurrenceDays   String[]       @default([])
+  activeFrom       DateTime?
+  activeUntil      DateTime?
+  masterId         String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  bookings         Booking[]
+}
+
+model Booking {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId     String
+  company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  scheduleId    String
+  schedule      Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  origin        String
+  destination   String
+  departureDate DateTime?
+  departureTime String
+  arrivalTime   String?
+  seatNumbers   Int[]
+  seats         Int
+  total         Decimal   @db.Decimal(10, 2)
+  payment       Json?
+  passengerName String?
+  passengerEmail String?
+  passengerPhone String?
+  status        String    @default("CONFIRMED")
+  cancelledBy   String?
+  ticketNumber  String?
+  busNumber     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
