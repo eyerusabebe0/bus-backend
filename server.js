@@ -5,6 +5,7 @@ const cors = require('cors');
 const router = require('./route');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 const { testDatabaseConnection } = require('./config/db');
+const { ensureDefaultSuperAdmin } = require('./utils/bootstrap');
 
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
@@ -42,6 +43,7 @@ app.use(errorHandler);
 async function startServer() {
   try {
     await testDatabaseConnection();
+    await ensureDefaultSuperAdmin();
     app.listen(PORT, HOST, () => {
       console.log(`BusTicket API running on ${HOST}:${PORT}`);
     });
